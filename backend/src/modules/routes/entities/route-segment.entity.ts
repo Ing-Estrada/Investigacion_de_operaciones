@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 import { IncidentSeverity, RoadType } from '@/common/enums';
-import { decimal2 } from '@/common/transformers/decimal.transformer';
+import { decimal2, decimal3 } from '@/common/transformers/decimal.transformer';
 import { GeoJSONPoint } from '@/common/types/geo.types';
 
 import { Route } from './route.entity';

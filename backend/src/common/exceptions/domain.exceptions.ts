@@ -7,10 +7,12 @@ import { HttpException, HttpStatus } from '@nestjs/common';
  * un pico de 502 apunta al proveedor, un pico de 500 apunta a nuestro código.
  */
 export class ExternalApiException extends HttpException {
+  // No se llama `cause`: `Error.cause` ya existe en la clase base y redeclararlo como
+  // opcional rompe la compatibilidad del tipo.
   constructor(
     readonly provider: string,
     message: string,
-    readonly cause?: unknown,
+    readonly originalError?: unknown,
   ) {
     super(
       {

@@ -38,9 +38,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly client: Redis;
   private available = false;
 
-  constructor(
-    @Inject(cacheConfig.KEY) private readonly config: ConfigType<typeof cacheConfig>,
-  ) {
+  constructor(@Inject(cacheConfig.KEY) config: ConfigType<typeof cacheConfig>) {
     this.client = new Redis({
       host: config.host,
       port: config.port,

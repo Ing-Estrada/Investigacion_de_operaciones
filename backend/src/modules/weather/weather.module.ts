@@ -1,5 +1,5 @@
 import { Module, Provider } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService, ConfigType } from '@nestjs/config';
 
 import { WeatherProvider as ProviderEnum } from '@/config/env.validation';
 import cacheConfig from '@/config/cache.config';
@@ -25,8 +25,8 @@ const weatherProvider: Provider = {
     configService: ConfigService,
     http: ResilientHttpService,
     redis: RedisService,
-    apis: ReturnType<typeof externalApisConfig>,
-    cache: ReturnType<typeof cacheConfig>,
+    apis: ConfigType<typeof externalApisConfig>,
+    cache: ConfigType<typeof cacheConfig>,
   ) => {
     const selected = configService.get<string>('WEATHER_PROVIDER');
     const hasApiKey = Boolean(apis.weather.openWeatherApiKey);

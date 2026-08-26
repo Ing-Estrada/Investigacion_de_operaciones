@@ -30,9 +30,7 @@ export class PasswordService {
    */
   private dummyHash: string | null = null;
 
-  constructor(
-    @Inject(securityConfig.KEY) private readonly config: ConfigType<typeof securityConfig>,
-  ) {
+  constructor(@Inject(securityConfig.KEY) config: ConfigType<typeof securityConfig>) {
     this.options = {
       algorithm: Algorithm.Argon2id,
       memoryCost: config.argon2.memoryCost,
