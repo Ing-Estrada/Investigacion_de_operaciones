@@ -1,0 +1,211 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Cancela ejecuciones previas del mismo branch para no gastar runners.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # =========================================================================
+  # 1. Escaneo de seguridad — corre primero y bloquea todo lo demás
+  # =========================================================================
+  security-scan:
+    name: Security scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Escanear secretos en el historial (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Auditoría de dependencias del backend
+        working-directory: backend
+        run: npm audit --audit-level=high
+
+      - name: Auditoría de dependencias del frontend
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+  # =========================================================================
+  # 2. Backend: lint + typecheck + unit + integración contra PostGIS real
+  # =========================================================================
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: routeopt
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: route_optimizer_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U routeopt"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USERNAME: routeopt
+      DB_PASSWORD: test_password
+      DB_NAME: route_optimizer_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+      JWT_ACCESS_SECRET: ci_access_secret_at_least_32_characters_long
+      JWT_REFRESH_SECRET: ci_refresh_secret_at_least_32_characters_diff
+      CORS_ORIGINS: http://localhost:3000
+      OSRM_BASE_URL: http://router.project-osrm.org
+      NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
+      NOMINATIM_USER_AGENT: route-optimizer-ci/1.0 (ci@example.com)
+      OPENWEATHER_BASE_URL: https://api.openweathermap.org/data/2.5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+        working-directory: backend
+
+      - run: npm run lint
+        working-directory: backend
+
+      - run: npm run typecheck
+        working-directory: backend
+
+      - run: npm run test:unit -- --coverage
+        working-directory: backend
+
+      - name: Aplicar migraciones sobre la BD de test
+        run: npm run migration:run
+        working-directory: backend
+
+      - run: npm run test:e2e
+        working-directory: backend
+
+      - uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage/lcov.info
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
+
+  # =========================================================================
+  # 3. Frontend: lint + typecheck + unit + build
+  # =========================================================================
+  frontend:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: frontend
+
+      - run: npm run lint
+        working-directory: frontend
+
+      - run: npm run typecheck
+        working-directory: frontend
+
+      - run: npm run test:unit -- --coverage
+        working-directory: frontend
+
+      - run: npm run build
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+
+  # =========================================================================
+  # 4. Imágenes Docker — verifica que la pila completa construye
+  # =========================================================================
+  docker-build:
+    name: Docker build
+    runs-on: ubuntu-latest
+    needs: [security-scan, backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          target: production
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          build-args: NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =========================================================================
+  # 5. Despliegues
+  # =========================================================================
+  deploy-staging:
+    name: Deploy to staging
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Desplegar
+        run: echo "Configurar el destino real (ECS/K8s/VM) antes de habilitar este paso."
+
+  deploy-production:
+    name: Deploy to production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Desplegar
+        run: echo "Configurar el destino real (ECS/K8s/VM) antes de habilitar este paso."
