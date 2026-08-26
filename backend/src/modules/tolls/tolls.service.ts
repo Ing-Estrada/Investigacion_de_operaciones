@@ -150,7 +150,8 @@ export class TollsService {
         SELECT tr.rate_amount, tr.currency
         FROM toll_rates tr
         WHERE tr.toll_station_id = s.id
-          AND ($4::text IS NULL OR tr.vehicle_category = $4::toll_rates_vehicle_category_enum)
+          -- Se compara como texto para no depender del nombre que Postgres da al tipo enum.
+          AND ($4::text IS NULL OR tr.vehicle_category::text = $4::text)
           AND tr.effective_date <= CURRENT_DATE
           AND (tr.expiration_date IS NULL OR tr.expiration_date >= CURRENT_DATE)
         ORDER BY tr.effective_date DESC
