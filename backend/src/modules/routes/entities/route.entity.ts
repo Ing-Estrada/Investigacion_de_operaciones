@@ -160,7 +160,12 @@ export class Route {
 
   @ApiProperty({ enum: RouteStatus })
   @Index('idx_routes_status')
-  @Column({ type: 'enum', enum: RouteStatus, name: 'route_status', default: RouteStatus.Calculated })
+  @Column({
+    type: 'enum',
+    enum: RouteStatus,
+    name: 'route_status',
+    default: RouteStatus.Calculated,
+  })
   routeStatus: RouteStatus;
 
   /** Resumen meteorológico agregado de la ruta, para no releer todos los segmentos. */

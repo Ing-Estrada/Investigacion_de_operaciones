@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -19,7 +13,11 @@ import { IncidentHit, IncidentsService } from '@/modules/incidents/incidents.ser
 import { TollHit, TollsService } from '@/modules/tolls/tolls.service';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 import { VehiclesService } from '@/modules/vehicles/vehicles.service';
-import { RouteWeather, WEATHER_ALERT_THRESHOLD, WeatherService } from '@/modules/weather/weather.service';
+import {
+  RouteWeather,
+  WEATHER_ALERT_THRESHOLD,
+  WeatherService,
+} from '@/modules/weather/weather.service';
 
 import { OptimizedPath, RouteOptimizerService } from './algorithms/route-optimizer.service';
 import {
@@ -250,7 +248,10 @@ export class RoutesService {
     user: AuthenticatedUser,
     request: RequestWithUser,
   ): Promise<RouteResponseDto> {
-    const route = await this.routeRepository.findOne({ where: { id }, relations: { segments: true } });
+    const route = await this.routeRepository.findOne({
+      where: { id },
+      relations: { segments: true },
+    });
     if (!route) throw new NotFoundException('Ruta no encontrada.');
 
     const canManage =
@@ -398,7 +399,9 @@ export class RoutesService {
       origin: dto.origin,
       destination: dto.destination,
       geometry: geometry.map((point) => [point.latitude, point.longitude] as [number, number]),
-      segments: (entity.segments ?? []).map((segment, index) => this.segmentToDto(segment, index, optimized)),
+      segments: (entity.segments ?? []).map((segment, index) =>
+        this.segmentToDto(segment, index, optimized),
+      ),
       // Solo los peajes que la ruta elegida atraviesa realmente: la consulta espacial
       // devolvió los de todas las alternativas.
       tollBreakdown: tolls

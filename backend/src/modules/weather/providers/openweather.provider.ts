@@ -52,8 +52,7 @@ export class OpenWeatherProvider implements WeatherProvider {
   async getWeather(coordinates: Coordinates): Promise<WeatherData> {
     // Se redondea a 2 decimales (~1,1 km): el parte meteorológico no cambia dentro de
     // esa celda, así que consultar cada vértice de la geometría sería tirar cuota.
-    const key =
-      `weather:${coordinates.latitude.toFixed(2)}:${coordinates.longitude.toFixed(2)}`;
+    const key = `weather:${coordinates.latitude.toFixed(2)}:${coordinates.longitude.toFixed(2)}`;
 
     return this.redis.wrap(key, this.cache.ttl.weather, async () => {
       const apiKey = this.config.weather.openWeatherApiKey;

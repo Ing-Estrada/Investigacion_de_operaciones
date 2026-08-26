@@ -2,7 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 
-import { AuditAction, IncidentSeverity, IncidentType, INCIDENT_SEVERITY_PENALTY } from '@/common/enums';
+import {
+  AuditAction,
+  IncidentSeverity,
+  IncidentType,
+  INCIDENT_SEVERITY_PENALTY,
+} from '@/common/enums';
 import { AuthenticatedUser, RequestWithUser } from '@/common/types/authenticated-user';
 import { Coordinates, toGeoJSONPoint } from '@/common/types/geo.types';
 import { toLineStringWkt } from '@/common/utils/wkt';

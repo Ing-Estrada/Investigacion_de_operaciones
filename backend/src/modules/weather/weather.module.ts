@@ -20,7 +20,13 @@ import { WeatherService } from './weather.service';
  */
 const weatherProvider: Provider = {
   provide: WEATHER_PROVIDER,
-  inject: [ConfigService, ResilientHttpService, RedisService, externalApisConfig.KEY, cacheConfig.KEY],
+  inject: [
+    ConfigService,
+    ResilientHttpService,
+    RedisService,
+    externalApisConfig.KEY,
+    cacheConfig.KEY,
+  ],
   useFactory: (
     configService: ConfigService,
     http: ResilientHttpService,

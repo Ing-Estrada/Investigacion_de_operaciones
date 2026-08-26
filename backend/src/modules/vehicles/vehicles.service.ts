@@ -156,11 +156,7 @@ export class VehiclesService {
   }
 
   /** Baja lógica: las rutas históricas mantienen la referencia al vehículo. */
-  async deactivate(
-    id: string,
-    user: AuthenticatedUser,
-    request: RequestWithUser,
-  ): Promise<void> {
+  async deactivate(id: string, user: AuthenticatedUser, request: RequestWithUser): Promise<void> {
     const vehicle = await this.findOneForUser(id, user);
 
     if (vehicle.userId !== user.id && user.role !== Role.Admin) {

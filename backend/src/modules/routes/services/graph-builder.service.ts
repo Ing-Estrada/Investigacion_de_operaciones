@@ -36,7 +36,9 @@ export class GraphBuilderService {
 
   build(routes: RawRoute[]): BuiltGraph {
     if (routes.length === 0 || routes[0].segments.length === 0) {
-      throw new RouteNotFoundException('El proveedor de rutas no devolvió ninguna traza utilizable.');
+      throw new RouteNotFoundException(
+        'El proveedor de rutas no devolvió ninguna traza utilizable.',
+      );
     }
 
     const graph = new RoadGraph();
@@ -50,7 +52,7 @@ export class GraphBuilderService {
 
       let previousNodeId: string | null = null;
 
-      for (const [segmentIndex, segment] of route.segments.entries()) {
+      for (const segment of route.segments) {
         const geometry = segment.geometry;
         if (geometry.length < 2) continue;
 
@@ -63,9 +65,11 @@ export class GraphBuilderService {
         graph.addNode({ id: fromId, coordinates: start });
         graph.addNode({ id: toId, coordinates: end });
 
-        // El origen es el primer nodo de la primera ruta; todas las alternativas parten
-        // del mismo punto enganchado por el proveedor, así que coinciden.
-        if (routeIndex === 0 && segmentIndex === 0) originNodeId = fromId;
+        // El origen es el primer nodo utilizable de la primera ruta. Se comprueba contra
+        // `null` en lugar de contra el índice 0 porque el proveedor emite tramos de
+        // longitud cero en la maniobra de salida: si el primero se descarta, el origen
+        // es el siguiente que sí sirve, no "ninguno".
+        if (routeIndex === 0 && originNodeId === null) originNodeId = fromId;
 
         // Un tramo tan corto que sus extremos caen en el mismo nodo no aporta un arco;
         // omitirlo no rompe la conectividad porque el siguiente tramo arranca ahí mismo.

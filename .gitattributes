@@ -1,0 +1,27 @@
+# Normalización de finales de línea.
+#
+# Sin esto, `core.autocrlf` de cada máquina decide por su cuenta: un colaborador en
+# Windows convierte todo a CRLF al hacer checkout y el siguiente `git status` marca el
+# repositorio entero como modificado. Peor aún, Prettier está configurado con
+# `endOfLine: "lf"`, así que ambas herramientas se pelearían en cada guardado.
+* text=auto eol=lf
+
+# Los scripts de shell DEBEN llevar LF: con CRLF, el intérprete lee el retorno de carro
+# como parte del comando y falla con errores incomprensibles dentro de los contenedores.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binarios: git no debe tocarlos.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+# Los lockfiles son generados: no ensucian los diffs de las revisiones.
+package-lock.json linguist-generated=true -diff

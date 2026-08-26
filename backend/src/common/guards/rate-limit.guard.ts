@@ -71,7 +71,9 @@ export class RateLimitGuard implements CanActivate {
   private buildKey(request: RequestWithUser, options: RateLimitOptions): string {
     const route = `${request.method}:${request.route?.path ?? request.url.split('?')[0]}`;
     const identity =
-      !options.byIpOnly && request.user ? `user:${request.user.id}` : `ip:${this.clientIp(request)}`;
+      !options.byIpOnly && request.user
+        ? `user:${request.user.id}`
+        : `ip:${this.clientIp(request)}`;
     return `ratelimit:${identity}:${route}`;
   }
 

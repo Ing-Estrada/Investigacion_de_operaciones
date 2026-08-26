@@ -28,7 +28,10 @@ export class ExternalApiException extends HttpException {
 
 /** El circuito está abierto: se rechaza sin llamar al proveedor. */
 export class CircuitOpenException extends HttpException {
-  constructor(readonly provider: string, retryAfterMs: number) {
+  constructor(
+    readonly provider: string,
+    retryAfterMs: number,
+  ) {
     super(
       {
         statusCode: HttpStatus.SERVICE_UNAVAILABLE,

@@ -2,7 +2,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { Coordinates, haversineDistanceKm, samplePolyline } from '@/common/types/geo.types';
 
-import { NEUTRAL_WEATHER, WEATHER_PROVIDER, WeatherData, WeatherProvider } from './providers/weather.provider';
+import {
+  NEUTRAL_WEATHER,
+  WEATHER_PROVIDER,
+  WeatherData,
+  WeatherProvider,
+} from './providers/weather.provider';
 
 export interface WeatherSample {
   coordinates: Coordinates;

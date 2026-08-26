@@ -30,10 +30,7 @@ import { TollStation } from './toll-station.entity';
   'effectiveDate',
 ])
 @Check('chk_toll_rates_amount', 'rate_amount > 0')
-@Check(
-  'chk_toll_rates_dates',
-  'expiration_date IS NULL OR expiration_date >= effective_date',
-)
+@Check('chk_toll_rates_dates', 'expiration_date IS NULL OR expiration_date >= effective_date')
 export class TollRate {
   @ApiProperty({ format: 'uuid' })
   @PrimaryGeneratedColumn('uuid')

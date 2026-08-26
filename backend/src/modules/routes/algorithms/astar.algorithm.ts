@@ -55,7 +55,10 @@ export class AStarAlgorithm implements PathfindingAlgorithm {
     const estimateToTarget = (nodeId: string): number => {
       const node = graph.getNode(nodeId);
       if (!node) return 0;
-      return costModel.heuristic(haversineDistanceKm(node.coordinates, target.coordinates), maxSpeedKmh);
+      return costModel.heuristic(
+        haversineDistanceKm(node.coordinates, target.coordinates),
+        maxSpeedKmh,
+      );
     };
 
     /** g(n): coste real acumulado desde el origen. */

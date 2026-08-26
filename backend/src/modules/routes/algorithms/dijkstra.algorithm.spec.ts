@@ -1,9 +1,5 @@
 import { DijkstraAlgorithm } from './dijkstra.algorithm';
-import {
-  buildGraph,
-  makeCostModel,
-  SAMPLE_NETWORK,
-} from './__fixtures__/graph.fixture';
+import { buildGraph, makeCostModel, SAMPLE_NETWORK } from './__fixtures__/graph.fixture';
 
 describe('DijkstraAlgorithm', () => {
   const dijkstra = new DijkstraAlgorithm();
@@ -23,10 +19,7 @@ describe('DijkstraAlgorithm', () => {
     const graph = buildGraph(SAMPLE_NETWORK);
     const path = dijkstra.findPath(graph, 'A', 'F', costModel);
 
-    const expected = (path?.edges ?? []).reduce(
-      (sum, edge) => sum + costModel.edgeWeight(edge),
-      0,
-    );
+    const expected = (path?.edges ?? []).reduce((sum, edge) => sum + costModel.edgeWeight(edge), 0);
 
     expect(path?.weight).toBeCloseTo(expected, 10);
   });

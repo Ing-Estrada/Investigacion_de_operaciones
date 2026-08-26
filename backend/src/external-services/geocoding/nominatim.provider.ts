@@ -73,8 +73,7 @@ export class NominatimGeocodingProvider {
 
   /** Coordenadas -> dirección legible. */
   async reverse(coordinates: Coordinates): Promise<string | null> {
-    const key =
-      `geocode:reverse:${coordinates.latitude.toFixed(5)}:${coordinates.longitude.toFixed(5)}`;
+    const key = `geocode:reverse:${coordinates.latitude.toFixed(5)}:${coordinates.longitude.toFixed(5)}`;
 
     const result = await this.redis.wrap(key, this.cache.ttl.geocoding, async () => {
       const place = await this.http.request<NominatimPlace | { error?: string }>(PROVIDER_NAME, {

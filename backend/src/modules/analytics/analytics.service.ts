@@ -6,11 +6,7 @@ import { Role, RouteStatus } from '@/common/enums';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { Route } from '@/modules/routes/entities/route.entity';
 
-import {
-  CostByRoadTypeDto,
-  RouteAnalyticsDto,
-  RoutesOverTimeDto,
-} from './dto/analytics.dto';
+import { CostByRoadTypeDto, RouteAnalyticsDto, RoutesOverTimeDto } from './dto/analytics.dto';
 
 @Injectable()
 export class AnalyticsService {

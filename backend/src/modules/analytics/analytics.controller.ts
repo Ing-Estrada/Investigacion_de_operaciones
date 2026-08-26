@@ -23,8 +23,7 @@ export class AnalyticsController {
   @Get('summary')
   @ApiOperation({
     summary: 'Indicadores agregados del periodo',
-    description:
-      'ADMIN y DISPATCHER ven la operación completa; el resto, solo sus propias rutas.',
+    description: 'ADMIN y DISPATCHER ven la operación completa; el resto, solo sus propias rutas.',
   })
   @ApiResponse({ status: 200, type: RouteAnalyticsDto })
   async summary(

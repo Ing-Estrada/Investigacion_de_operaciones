@@ -100,13 +100,19 @@ describe('pathOverlapRatio', () => {
   });
 
   it('mide la fracción de distancia compartida, no el número de arcos', () => {
+    // A-B-D-F es el óptimo. Bloqueando el último tramo y las salidas hacia C, la única
+    // alternativa es A-B-D-E-F, que comparte con el óptimo A-B (40 km) y B-D (35 km)
+    // de sus 170 km: 75/170 ≈ 0,44.
     const primary = dijkstra.findPath(graph, 'A', 'F', costModel);
     const alternative = dijkstra.findPath(graph, 'A', 'F', costModel, {
-      blockedEdges: new Set(['D->F']),
+      blockedEdges: new Set(['D->F', 'A->C', 'B->C']),
     });
+
+    expect(alternative?.nodeIds).toEqual(['A', 'B', 'D', 'E', 'F']);
 
     const ratio = pathOverlapRatio(alternative!, primary!);
 
+    expect(ratio).toBeCloseTo(75 / 170, 5);
     expect(ratio).toBeGreaterThan(0);
     expect(ratio).toBeLessThan(1);
   });

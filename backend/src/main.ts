@@ -45,9 +45,7 @@ async function bootstrap(): Promise<void> {
           upgradeInsecureRequests: isProduction ? [] : null,
         },
       },
-      hsts: isProduction
-        ? { maxAge: 31_536_000, includeSubDomains: true, preload: true }
-        : false,
+      hsts: isProduction ? { maxAge: 31_536_000, includeSubDomains: true, preload: true } : false,
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
       crossOriginResourcePolicy: { policy: 'same-site' },
       // Oculta la cabecera X-Powered-By, que anuncia gratis el stack a un atacante.
@@ -110,10 +108,7 @@ async function bootstrap(): Promise<void> {
           'vial real, con integración de clima, incidentes y peajes por categoría de vehículo.',
       )
       .setVersion('1.0.0')
-      .addBearerAuth(
-        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', in: 'header' },
-        'JWT',
-      )
+      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT', in: 'header' }, 'JWT')
       .addCookieAuth('access_token')
       .addTag('Auth', 'Autenticación, sesiones y contraseñas')
       .addTag('Users', 'Gestión de usuarios (solo ADMIN)')
@@ -144,6 +139,9 @@ async function bootstrap(): Promise<void> {
 bootstrap().catch((error) => {
   // Un fallo de arranque no puede quedar como una promesa rechazada sin capturar:
   // el proceso debe morir con código distinto de cero para que el orquestador lo sepa.
-  new Logger('Bootstrap').error('Fallo al arrancar la aplicación', error instanceof Error ? error.stack : String(error));
+  new Logger('Bootstrap').error(
+    'Fallo al arrancar la aplicación',
+    error instanceof Error ? error.stack : String(error),
+  );
   process.exit(1);
 });

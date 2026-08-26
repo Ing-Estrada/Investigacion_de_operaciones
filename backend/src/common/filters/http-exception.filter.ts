@@ -75,7 +75,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     // 429 y 503 deben decirle al cliente cuándo reintentar.
-    const retryAfterSec = body.retryAfterSec ?? (body.retryAfterMs ? Number(body.retryAfterMs) / 1000 : undefined);
+    const retryAfterSec =
+      body.retryAfterSec ?? (body.retryAfterMs ? Number(body.retryAfterMs) / 1000 : undefined);
     if (typeof retryAfterSec === 'number' && Number.isFinite(retryAfterSec)) {
       response.setHeader('Retry-After', Math.ceil(retryAfterSec).toString());
     }
