@@ -20,7 +20,12 @@ export interface OptimizationRequest {
   /** Alternativas a devolver además de la óptima. */
   alternativesWanted: number;
   algorithm?: 'dijkstra' | 'astar';
+  /** Penaliza fuertemente los tramos de pago sin llegar a prohibirlos. */
+  avoidTolls?: boolean;
 }
+
+/** Cuánto se multiplica el peaje en la función objetivo cuando el usuario pide evitarlos. */
+const TOLL_AVERSION_MULTIPLIER = 25;
 
 export interface OptimizedPath {
   path: Path;
@@ -65,6 +70,7 @@ export class RouteOptimizerService {
       normalization: this.config.normalization,
       consumptionLPer100Km: request.consumptionLPer100Km,
       fuelPricePerLiter: request.fuelPricePerLiter,
+      tollAversionMultiplier: request.avoidTolls ? TOLL_AVERSION_MULTIPLIER : 1,
     });
 
     // A* por defecto: en una búsqueda punto a punto explora bastantes menos nodos que

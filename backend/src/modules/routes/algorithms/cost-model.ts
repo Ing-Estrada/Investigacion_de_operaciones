@@ -19,6 +19,16 @@ export interface CostContext {
   /** Consumo del vehículo en litros por 100 km (RF-013). */
   consumptionLPer100Km: number;
   fuelPricePerLiter: number;
+  /**
+   * Aversión a los peajes. 1 = neutral. Con valores mayores, el peaje pesa más en la
+   * *decisión* sin alterar el importe que se *informa*: es una preferencia del usuario,
+   * no un cambio en el precio real. Se usa para `avoidTolls`.
+   *
+   * Se implementa como penalización y no como prohibición porque bloquear todas las
+   * vías de pago puede dejar el destino inalcanzable, y devolver "no hay ruta" es peor
+   * respuesta que "esta ruta tiene un peaje".
+   */
+  tollAversionMultiplier?: number;
 }
 
 export interface PathMetrics {
@@ -96,9 +106,15 @@ export class CostModel {
     return base * (1 + edge.weatherIntensity);
   }
 
-  /** Coste monetario del tramo: combustible + peaje (RF-006). */
+  /** Coste monetario real del tramo: combustible + peaje (RF-006). Es lo que se informa. */
   monetaryCost(edge: RoadEdge): number {
     return this.fuelLiters(edge) * this.context.fuelPricePerLiter + edge.tollCost;
+  }
+
+  /** Coste que ve el optimizador, con la aversión a peajes aplicada. */
+  private optimizationCost(edge: RoadEdge): number {
+    const aversion = this.context.tollAversionMultiplier ?? 1;
+    return this.fuelLiters(edge) * this.context.fuelPricePerLiter + edge.tollCost * aversion;
   }
 
   /**
@@ -110,7 +126,7 @@ export class CostModel {
 
     const distanceTerm = edge.distanceKm / normalization.distanceKm;
     const timeTerm = this.effectiveDurationMinutes(edge) / normalization.timeMinutes;
-    const costTerm = this.monetaryCost(edge) / normalization.costUnits;
+    const costTerm = this.optimizationCost(edge) / normalization.costUnits;
 
     return (
       weights.distance * distanceTerm +
