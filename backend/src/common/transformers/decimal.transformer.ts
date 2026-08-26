@@ -21,3 +21,4 @@ export class DecimalTransformer implements ValueTransformer {
 }
 
 export const decimal2 = new DecimalTransformer(2);
+export const decimal3 = new DecimalTransformer(3);
