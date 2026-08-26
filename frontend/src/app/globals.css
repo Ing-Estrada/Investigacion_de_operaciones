@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --surface: 248 250 252;
+    --surface-raised: 255 255 255;
+    --border: 226 232 240;
+    --content: 15 23 42;
+    --content-muted: 100 116 139;
+    --accent: 29 78 216;
+    --accent-contrast: 255 255 255;
+    --success: 21 128 61;
+    --warning: 180 83 9;
+    --danger: 185 28 28;
+
+    /*
+     * Tokens de visualización. Se declaran como color completo (no como canal RGB)
+     * porque los atributos SVG de Recharts los consumen directamente con var().
+     *
+     * Escala secuencial azul de un solo tono: las gráficas de este panel comparan
+     * magnitud, no identidad entre series. Una paleta categórica aquí pintaría de
+     * colores distintos cosas que solo se diferencian por su tamaño.
+     */
+    --chart-grid: #e1e0d9;
+    --chart-axis: #c3c2b7;
+    --chart-ink: #52514e;
+    --chart-tooltip-bg: #ffffff;
+
+    --chart-series: #2a78d6;
+    /* Pasos ordenados de mayor a menor magnitud. Ninguno baja del paso 250, el
+       límite por debajo del cual el tono deja de despegarse del fondo claro. */
+    --chart-seq-1: #1c5cab;
+    --chart-seq-2: #2a78d6;
+    --chart-seq-3: #5598e7;
+    --chart-seq-4: #86b6ef;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: 8 12 22;
+      --surface-raised: 20 27 42;
+      --border: 42 53 74;
+      --content: 226 232 240;
+      --content-muted: 148 163 184;
+      --accent: 96 165 250;
+      --accent-contrast: 8 12 22;
+      --success: 74 222 128;
+      --warning: 251 191 36;
+      --danger: 248 113 113;
+
+      /* El modo oscuro no invierte la escala clara: son pasos elegidos para la
+         superficie oscura, donde "más" se codifica con el tono más claro. */
+      --chart-grid: #2c2c2a;
+      --chart-axis: #383835;
+      --chart-ink: #c3c2b7;
+      --chart-tooltip-bg: #141b2a;
+
+      --chart-series: #3987e5;
+      --chart-seq-1: #9ec5f4;
+      --chart-seq-2: #6da7ec;
+      --chart-seq-3: #3987e5;
+      --chart-seq-4: #256abf;
+    }
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface text-content antialiased;
+  }
+
+  /* Foco visible y consistente: quitarlo rompe la navegación por teclado. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-surface;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-border bg-surface-raised;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-content;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-content
+      placeholder:text-content-muted focus:border-accent focus:outline-none focus:ring-1
+      focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm
+      font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-accent-contrast hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply btn border border-border bg-surface-raised text-content hover:bg-surface;
+  }
+
+  .btn-ghost {
+    @apply btn text-content-muted hover:bg-surface-raised hover:text-content;
+  }
+}
+
+/*
+ * Leaflet inyecta sus propios estilos. Estas reglas ajustan el contenedor al layout y
+ * hacen que los controles y los popups sigan el tema de la aplicación en lugar de
+ * quedarse siempre en blanco.
+ */
+.leaflet-container {
+  @apply h-full w-full bg-surface;
+  font-family: inherit;
+}
+
+.leaflet-control-attribution,
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  @apply bg-surface-raised text-content;
+}
+
+.leaflet-control-attribution a {
+  @apply text-accent;
+}
+
+.leaflet-bar a {
+  @apply bg-surface-raised text-content;
+}
+
+/*
+ * Los mosaicos de OpenStreetMap son claros. En tema oscuro se invierten y se corrige el
+ * tono, en lugar de dejar un rectángulo deslumbrante en una interfaz oscura.
+ */
+@media (prefers-color-scheme: dark) {
+  .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+  }
+}

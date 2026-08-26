@@ -1,0 +1,2 @@
+# La salida standalone del Dockerfile copia ./public, así que el directorio debe existir
+# aunque todavía no haya assets estáticos propios.
