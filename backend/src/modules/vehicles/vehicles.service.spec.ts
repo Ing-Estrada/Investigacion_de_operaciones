@@ -95,7 +95,12 @@ describe('VehiclesService', () => {
   let service: VehiclesService;
   // `jest.Mock` en vez de `jest.Mocked<Repository>`: los métodos de TypeORM están
   // sobrecargados y reproducir sus firmas en un doble no aporta seguridad al test.
-  let vehicleRepository: { find: jest.Mock; findOne: jest.Mock; create: jest.Mock; save: jest.Mock };
+  let vehicleRepository: {
+    find: jest.Mock;
+    findOne: jest.Mock;
+    create: jest.Mock;
+    save: jest.Mock;
+  };
   let typeRepository: { find: jest.Mock; findOne: jest.Mock };
   let auditService: { record: jest.Mock; extractIp: jest.Mock };
 
@@ -104,7 +109,9 @@ describe('VehiclesService', () => {
       find: jest.fn(async () => []),
       findOne: jest.fn(async () => makeVehicle()),
       create: jest.fn((entity: Partial<Vehicle>) => entity as Vehicle),
-      save: jest.fn(async (entity: Partial<Vehicle>) => ({ id: 'vehicle-1', ...entity }) as Vehicle),
+      save: jest.fn(
+        async (entity: Partial<Vehicle>) => ({ id: 'vehicle-1', ...entity }) as Vehicle,
+      ),
     };
 
     typeRepository = {
@@ -181,13 +188,16 @@ describe('VehiclesService', () => {
       );
     });
 
-    it.each([Role.Admin, Role.Dispatcher])('permite a un %s ver un vehículo ajeno', async (role) => {
-      vehicleRepository.findOne.mockResolvedValue(makeVehicle({ userId: 'otro-usuario' }));
+    it.each([Role.Admin, Role.Dispatcher])(
+      'permite a un %s ver un vehículo ajeno',
+      async (role) => {
+        vehicleRepository.findOne.mockResolvedValue(makeVehicle({ userId: 'otro-usuario' }));
 
-      await expect(
-        service.findOneForUser('vehicle-1', makeAuthUser({ role })),
-      ).resolves.toMatchObject({ id: 'vehicle-1' });
-    });
+        await expect(
+          service.findOneForUser('vehicle-1', makeAuthUser({ role })),
+        ).resolves.toMatchObject({ id: 'vehicle-1' });
+      },
+    );
   });
 
   describe('create', () => {
@@ -210,11 +220,7 @@ describe('VehiclesService', () => {
 
     it('rechaza un depósito con más combustible del que cabe', async () => {
       await expect(
-        service.create(
-          { ...CREATE_DTO, currentFuelLiters: 500 },
-          makeAuthUser(),
-          REQUEST,
-        ),
+        service.create({ ...CREATE_DTO, currentFuelLiters: 500 }, makeAuthUser(), REQUEST),
       ).rejects.toThrow('El combustible actual no puede superar la capacidad del depósito.');
     });
 
@@ -268,15 +274,18 @@ describe('VehiclesService', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('permite poner el consumo personalizado a null para volver al del catálogo', async () => {
+    it('fija el consumo medido y desplaza al del catálogo', async () => {
+      // `effectiveConsumptionLPer100Km` prefiere el medido sobre el del tipo (RF-013).
+      // Nota: el DTO no admite `null`, así que una vez fijado no hay forma de volver
+      // al valor del catálogo desde la API.
       const updated = await service.update(
         'vehicle-1',
-        { customFuelConsumptionLPer100Km: null },
+        { customFuelConsumptionLPer100Km: 42.5 },
         makeAuthUser(),
         REQUEST,
       );
 
-      expect(updated.customFuelConsumptionLPer100Km).toBeNull();
+      expect(updated.customFuelConsumptionLPer100Km).toBe(42.5);
     });
 
     it('prohíbe a un dispatcher modificar un vehículo ajeno aunque pueda verlo', async () => {
@@ -297,7 +306,12 @@ describe('VehiclesService', () => {
       vehicleRepository.findOne.mockResolvedValue(makeVehicle({ userId: 'otro-usuario' }));
 
       await expect(
-        service.update('vehicle-1', { isActive: false }, makeAuthUser({ role: Role.Admin }), REQUEST),
+        service.update(
+          'vehicle-1',
+          { isActive: false },
+          makeAuthUser({ role: Role.Admin }),
+          REQUEST,
+        ),
       ).resolves.toMatchObject({ isActive: false });
     });
 
@@ -344,7 +358,9 @@ describe('VehiclesService', () => {
   });
 
   describe('assertCanTraverse (RF-014)', () => {
-    const vehicle = makeVehicle({ vehicleType: makeType({ maxHeightMeters: 4.1, maxWeightKg: 48_000 }) });
+    const vehicle = makeVehicle({
+      vehicleType: makeType({ maxHeightMeters: 4.1, maxWeightKg: 48_000 }),
+    });
 
     it('acepta una ruta sin restricciones declaradas', () => {
       expect(() => service.assertCanTraverse(vehicle, [makeEdge(), makeEdge()])).not.toThrow();
@@ -368,51 +384,37 @@ describe('VehiclesService', () => {
       expect(() => service.assertCanTraverse(vehicle, edges)).toThrow(VehicleRestrictionException);
     });
 
-    it('nombra el tramo y ambas magnitudes en la violación', () => {
-      const edges = [makeEdge({ maxHeightMeters: 3.5, maxWeightKg: 20_000, roadName: 'Puente viejo' })];
+    it('nombra el tramo y ambas magnitudes en la restricción incumplida', () => {
+      const edges = [
+        makeEdge({ maxHeightMeters: 3.5, maxWeightKg: 20_000, roadName: 'Puente viejo' }),
+      ];
 
-      try {
-        service.assertCanTraverse(vehicle, edges);
-        fail('Debería haber lanzado VehicleRestrictionException');
-      } catch (error) {
-        const violations = (error as VehicleRestrictionException).getResponse() as {
-          violations: string[];
-        };
-        expect(violations.violations).toHaveLength(2);
-        expect(violations.violations[0]).toContain('Puente viejo');
-        expect(violations.violations[0]).toContain('4.1');
-      }
+      const restrictions = captureRestrictions(() => service.assertCanTraverse(vehicle, edges));
+
+      expect(restrictions).toHaveLength(2);
+      expect(restrictions[0]).toContain('Puente viejo');
+      expect(restrictions[0]).toContain('3.5');
+      expect(restrictions[0]).toContain('4.1');
+      expect(restrictions[1]).toContain('20000');
     });
 
     it('cae al identificador del arco si el tramo no tiene nombre', () => {
       const edges = [makeEdge({ maxHeightMeters: 3, roadName: undefined, id: 'edge-42' })];
 
-      try {
-        service.assertCanTraverse(vehicle, edges);
-        fail('Debería haber lanzado VehicleRestrictionException');
-      } catch (error) {
-        const response = (error as VehicleRestrictionException).getResponse() as {
-          violations: string[];
-        };
-        expect(response.violations[0]).toContain('edge-42');
-      }
+      const restrictions = captureRestrictions(() => service.assertCanTraverse(vehicle, edges));
+
+      expect(restrictions[0]).toContain('edge-42');
     });
 
-    it('limita la lista a 10 violaciones', () => {
+    it('limita la lista a 10 restricciones', () => {
       // Una ruta larga con restricción en cada tramo generaría una respuesta enorme.
       const edges = Array.from({ length: 40 }, (_, index) =>
         makeEdge({ id: `edge-${index}`, maxHeightMeters: 3 }),
       );
 
-      try {
-        service.assertCanTraverse(vehicle, edges);
-        fail('Debería haber lanzado VehicleRestrictionException');
-      } catch (error) {
-        const response = (error as VehicleRestrictionException).getResponse() as {
-          violations: string[];
-        };
-        expect(response.violations).toHaveLength(10);
-      }
+      const restrictions = captureRestrictions(() => service.assertCanTraverse(vehicle, edges));
+
+      expect(restrictions).toHaveLength(10);
     });
 
     it('ignora los tramos sin restricción declarada en lugar de suponerlos libres', () => {

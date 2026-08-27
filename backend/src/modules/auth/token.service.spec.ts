@@ -1,4 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash } from 'node:crypto';
 import { FindOperator, Repository } from 'typeorm';
@@ -23,7 +24,7 @@ const CONFIG = {
     accessTtl: '15m',
     refreshTtl: '7d',
   },
-} as unknown as ReturnType<typeof securityConfig>;
+} as unknown as ConfigType<typeof securityConfig>;
 
 const CONTEXT = { ipAddress: '203.0.113.5', userAgent: 'jest' };
 
@@ -228,8 +229,9 @@ describe('TokenService', () => {
       // cuál de las dos es la copiada.
       const stillActive = repository.rows.filter((row) => row.revokedAt === null);
       expect(stillActive).toHaveLength(0);
-      expect(repository.rows.find((row) => row.tokenHash === sha256(rotated.refreshToken))
-        ?.revokedAt).toBeInstanceOf(Date);
+      expect(
+        repository.rows.find((row) => row.tokenHash === sha256(rotated.refreshToken))?.revokedAt,
+      ).toBeInstanceOf(Date);
     });
 
     it('rechaza un refresh token que no está en la base de datos', async () => {
@@ -249,15 +251,15 @@ describe('TokenService', () => {
       const original = await service.issueTokenPair(makeUser(), CONTEXT);
       repository.rows[0].expiresAt = new Date(Date.now() - 1000);
 
-      await expect(service.rotate(original.refreshToken, resolveActiveUser, CONTEXT)).rejects.toThrow(
-        'El refresh token ha expirado.',
-      );
+      await expect(
+        service.rotate(original.refreshToken, resolveActiveUser, CONTEXT),
+      ).rejects.toThrow('El refresh token ha expirado.');
     });
 
     it('rechaza una firma inválida sin consultar la base de datos', async () => {
-      await expect(
-        service.rotate('no-es-un-jwt', resolveActiveUser, CONTEXT),
-      ).rejects.toThrow('Refresh token inválido.');
+      await expect(service.rotate('no-es-un-jwt', resolveActiveUser, CONTEXT)).rejects.toThrow(
+        'Refresh token inválido.',
+      );
 
       expect(repository.findOne).not.toHaveBeenCalled();
     });
