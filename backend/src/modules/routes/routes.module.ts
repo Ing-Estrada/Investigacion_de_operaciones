@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import costModelConfig from '@/config/cost-model.config';
 import { ExternalServicesModule } from '@/external-services/external-services.module';
+import { FuelModule } from '@/modules/fuel/fuel.module';
 import { IncidentsModule } from '@/modules/incidents/incidents.module';
 import { TollsModule } from '@/modules/tolls/tolls.module';
 import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
@@ -29,6 +30,7 @@ import { RouteEnrichmentService } from './services/route-enrichment.service';
     WeatherModule,
     IncidentsModule,
     TollsModule,
+    FuelModule,
   ],
   controllers: [RoutesController],
   providers: [

@@ -16,6 +16,8 @@ interface RouteState {
   result: OptimizedRouteResponse | null;
   /** Ruta resaltada en el mapa: la principal o una de las alternativas. */
   selectedRouteId: string | null;
+  /** Tramo resaltado dentro de la ruta activa, por su `order`. */
+  selectedSegmentOrder: number | null;
 
   pickingMode: PickingMode;
   showIncidents: boolean;
@@ -31,6 +33,8 @@ interface RouteState {
 
   setResult: (result: OptimizedRouteResponse | null) => void;
   selectRoute: (id: string) => void;
+  /** Selecciona un tramo, o lo deselecciona si ya estaba activo. */
+  selectSegment: (order: number | null) => void;
 
   setPickingMode: (mode: PickingMode) => void;
   toggleIncidents: () => void;
@@ -48,6 +52,7 @@ const INITIAL = {
   algorithm: 'astar' as const,
   result: null,
   selectedRouteId: null,
+  selectedSegmentOrder: null,
   pickingMode: 'origin' as PickingMode,
   showIncidents: true,
   showTolls: true,
@@ -71,6 +76,7 @@ export const useRouteStore = create<RouteState>((set, get) => ({
       // haría creer que corresponde a los nuevos puntos.
       result: null,
       selectedRouteId: null,
+      selectedSegmentOrder: null,
       // Tras fijar el origen, el siguiente clic fija el destino: es la secuencia natural.
       pickingMode: point && !get().destination ? 'destination' : null,
     }),
@@ -80,6 +86,7 @@ export const useRouteStore = create<RouteState>((set, get) => ({
       destination: point,
       result: null,
       selectedRouteId: null,
+      selectedSegmentOrder: null,
       pickingMode: point && !get().origin ? 'origin' : null,
     }),
 
@@ -89,6 +96,7 @@ export const useRouteStore = create<RouteState>((set, get) => ({
       destination: state.origin,
       result: null,
       selectedRouteId: null,
+      selectedSegmentOrder: null,
     })),
 
   setVehicleId: (id) => set({ vehicleId: id }),
@@ -97,9 +105,21 @@ export const useRouteStore = create<RouteState>((set, get) => ({
   setAlgorithm: (algorithm) => set({ algorithm, result: null }),
 
   setResult: (result) =>
-    set({ result, selectedRouteId: result?.route.id ?? null, pickingMode: null }),
+    set({
+      result,
+      selectedRouteId: result?.route.id ?? null,
+      selectedSegmentOrder: null,
+      pickingMode: null,
+    }),
 
-  selectRoute: (id) => set({ selectedRouteId: id }),
+  // El `order` de un tramo solo es único dentro de su ruta: al cambiar de ruta, el
+  // tramo resaltado señalaría un tramo distinto del que el usuario había elegido.
+  selectRoute: (id) => set({ selectedRouteId: id, selectedSegmentOrder: null }),
+
+  selectSegment: (order) =>
+    set((state) => ({
+      selectedSegmentOrder: state.selectedSegmentOrder === order ? null : order,
+    })),
 
   setPickingMode: (mode) => set({ pickingMode: mode }),
   toggleIncidents: () => set((state) => ({ showIncidents: !state.showIncidents })),

@@ -1,5 +1,6 @@
 import dataSource from '../data-source';
 
+import { seedFuelPrices } from './fuel-prices.seeder';
 import { seedTollStations } from './toll-stations.seeder';
 import { seedAdminUser } from './users.seeder';
 import { seedVehicleTypes } from './vehicle-types.seeder';
@@ -24,6 +25,9 @@ async function run(): Promise<void> {
 
     const tollStations = await seedTollStations(dataSource);
     log(`Estaciones de peaje: ${tollStations} nueva(s) (con sus tarifas por categoría).`);
+
+    const fuelPrices = await seedFuelPrices(dataSource);
+    log(`Precios de combustible: ${fuelPrices} nuevo(s).`);
 
     if (skipAdmin) {
       log('Administrador: omitido (--skip-admin).');

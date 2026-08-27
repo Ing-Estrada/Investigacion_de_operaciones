@@ -87,6 +87,8 @@ export function RouteResults() {
   const result = useRouteStore((state) => state.result);
   const selectedRouteId = useRouteStore((state) => state.selectedRouteId);
   const selectRoute = useRouteStore((state) => state.selectRoute);
+  const selectedSegmentOrder = useRouteStore((state) => state.selectedSegmentOrder);
+  const selectSegment = useRouteStore((state) => state.selectSegment);
   const active = useRouteStore(selectActiveRoute);
 
   if (!result || !active) {
@@ -286,27 +288,45 @@ export function RouteResults() {
           <summary className="cursor-pointer text-sm font-semibold">
             Tramos ({active.segments.length})
           </summary>
-          <ol className="mt-3 space-y-2">
-            {active.segments.map((segment) => (
-              <li
-                key={segment.order}
-                className="flex items-start justify-between gap-3 border-b border-border pb-2 text-xs last:border-0 last:pb-0"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-content">{segment.roadName ?? 'Tramo sin nombre'}</p>
-                  <p className="text-content-muted">
-                    {ROAD_TYPE_LABELS[segment.roadType] ?? segment.roadType}
-                    {segment.hasToll && ' · peaje'}
-                    {segment.incidentPresent && ' · incidente'}
-                    {segment.weatherIntensityFactor > 0 &&
-                      ` · clima ${formatNumber(segment.weatherIntensityFactor, 2)}`}
-                  </p>
-                </div>
-                <span className="shrink-0 tabular-nums text-content-muted">
-                  {formatDistance(segment.distanceKm)}
-                </span>
-              </li>
-            ))}
+          <p className="mt-2 text-xs text-content-muted">
+            Selecciona un tramo para resaltarlo en el mapa.
+          </p>
+          <ol className="mt-2 space-y-1">
+            {active.segments.map((segment) => {
+              const isSelected = segment.order === selectedSegmentOrder;
+
+              return (
+                <li key={segment.order}>
+                  <button
+                    type="button"
+                    onClick={() => selectSegment(segment.order)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      'flex w-full items-start justify-between gap-3 rounded-lg border px-2 py-1.5 text-left text-xs transition-colors',
+                      isSelected
+                        ? 'border-warning bg-warning/10 font-medium'
+                        : 'border-transparent hover:bg-surface',
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-content">
+                        {segment.roadName ?? `Tramo ${segment.order + 1}`}
+                      </span>
+                      <span className="block text-content-muted">
+                        {ROAD_TYPE_LABELS[segment.roadType] ?? segment.roadType}
+                        {segment.hasToll && ' · peaje'}
+                        {segment.incidentPresent && ' · incidente'}
+                        {segment.weatherIntensityFactor > 0 &&
+                          ` · clima ${formatNumber(segment.weatherIntensityFactor, 2)}`}
+                      </span>
+                    </span>
+                    <span className="shrink-0 tabular-nums text-content-muted">
+                      {formatDistance(segment.distanceKm)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ol>
         </details>
       )}

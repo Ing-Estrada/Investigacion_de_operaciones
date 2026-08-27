@@ -30,8 +30,8 @@ optimización ponderando **distancia (40%), tiempo (30%), coste (20%) y riesgo (
 
 | Componente | Typecheck | Lint | Tests | Build |
 | --- | --- | --- | --- | --- |
-| Backend (NestJS) | OK | limpio | 204 unitarios + 16 e2e | OK |
-| Frontend (Next.js) | OK | limpio | 49 unitarios | OK |
+| Backend (NestJS) | OK | limpio | 220 unitarios + 16 e2e | OK |
+| Frontend (Next.js) | OK | limpio | 61 unitarios | OK |
 
 Los e2e corren contra PostgreSQL con PostGIS y Redis reales (`docker compose up -d postgres redis`
 y `npm run migration:run`), no contra dobles.
@@ -195,6 +195,11 @@ peso(arco) = 0,40 · (km / 1000)
            + 0,10 · riesgo
 ```
 
+El precio por litro sale del combustible del tipo de vehículo —diésel o gasolina— y de la
+tabla `fuel_prices`, versionada por fecha de vigencia. El que se aplicó se **congela** en
+la ruta (`routes.fuel_price_per_liter`), de modo que releer una ruta antigua muestra el
+precio de entonces y no el de hoy. Ambos se editan en la pestaña **Tarifas**.
+
 Los cuatro términos se **normalizan** antes de sumarse. Sin normalizar, mezclar
 kilómetros con minutos y con dólares hace que domine el criterio de mayor magnitud
 numérica con independencia de su peso: los pesos dejarían de significar nada.
@@ -330,6 +335,10 @@ Documentación interactiva en `/api/v1/docs` (Swagger UI, deshabilitado en produ
 | GET | `/incidents` | autenticado | Incidentes activos en un rectángulo |
 | POST/PATCH | `/incidents` | DISPATCHER·ADMIN | Alta y actualización |
 | GET | `/tolls/stations` | autenticado | Peajes cercanos con tarifa |
+| GET/POST/PATCH | `/tolls/admin/stations` | ADMIN·DISPATCHER | Alta y mantenimiento de estaciones |
+| POST/PATCH | `/tolls/admin/…/rates` | ADMIN·DISPATCHER | Tarifas por categoría |
+| GET | `/fuel/prices/current` | autenticado | Precio vigente de diésel y gasolina |
+| GET/POST/PATCH | `/fuel/prices` | ADMIN·DISPATCHER | Histórico y alta de precios |
 | GET | `/analytics/*` | autenticado | Indicadores agregados |
 | GET | `/health`, `/health/live` | público | Sondas |
 
@@ -344,14 +353,14 @@ Toda respuesta correcta viaja envuelta como `{ success, data, timestamp, path }`
 ```bash
 # Backend
 cd backend
-npm run test:unit          # 204 tests
+npm run test:unit          # 220 tests
 npm run test:unit -- --coverage
 npm run test:e2e           # requiere PostgreSQL + migraciones aplicadas
 npm run typecheck && npm run lint
 
 # Frontend
 cd frontend
-npm run test:unit          # 49 tests
+npm run test:unit          # 61 tests
 npm run typecheck && npm run lint
 ```
 

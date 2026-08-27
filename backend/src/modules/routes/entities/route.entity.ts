@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   Check,
   Column,
@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 
 import { RouteStatus } from '@/common/enums';
-import { decimal2 } from '@/common/transformers/decimal.transformer';
+import { decimal2, decimal4 } from '@/common/transformers/decimal.transformer';
 import { GeoJSONPoint } from '@/common/types/geo.types';
 import { User } from '@/modules/auth/entities/user.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
@@ -131,6 +131,25 @@ export class Route {
   @ApiProperty({ example: 44.43 })
   @Column({ type: 'decimal', precision: 12, scale: 2, name: 'fuel_cost', transformer: decimal2 })
   fuelCost: number;
+
+  /**
+   * Precio por litro aplicado al calcular esta ruta.
+   *
+   * Se congela aquí en lugar de releerlo de la configuración al consultar la ruta: el
+   * precio del combustible cambia, y mostrar el de hoy junto a un coste calculado hace
+   * un mes daría dos cifras que no cuadran entre sí. Nullable por las rutas anteriores
+   * a la migración cuyo consumo fue 0 y no permiten despejarlo.
+   */
+  @ApiPropertyOptional({ example: 1.05, nullable: true })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 4,
+    name: 'fuel_price_per_liter',
+    nullable: true,
+    transformer: decimal4,
+  })
+  fuelPricePerLiter: number | null;
 
   @ApiProperty({ example: 8.5 })
   @Column({ type: 'decimal', precision: 12, scale: 2, name: 'toll_cost', transformer: decimal2 })

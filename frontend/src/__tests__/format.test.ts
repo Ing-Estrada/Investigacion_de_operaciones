@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatCoordinates,
   formatCurrency,
+  formatDay,
   formatDistance,
   formatDuration,
   formatLiters,
@@ -83,5 +84,30 @@ describe('formatLiters', () => {
 describe('formatCoordinates', () => {
   it('usa cuatro decimales, suficientes para unos 11 metros', () => {
     expect(formatCoordinates(2.44981234, -76.61971234)).toBe('2.4498, -76.6197');
+  });
+});
+
+describe('formatDay', () => {
+  it('no retrocede un día en zonas por detrás de Greenwich', () => {
+    // `new Date('2025-01-01')` es medianoche UTC; formateada en UTC-5 caería en el
+    // 31 de diciembre y una tarifa vigente desde enero parecería del año anterior.
+    const formatted = formatDay('2025-01-01');
+
+    expect(formatted).toContain('2025');
+    expect(formatted).not.toContain('2024');
+  });
+
+  it('conserva el día exacto', () => {
+    expect(formatDay('2026-08-27')).toContain('27');
+  });
+
+  it('no añade una hora que el dato no tiene', () => {
+    expect(formatDay('2026-08-27')).not.toContain(':');
+  });
+
+  it('devuelve un guion ante un valor que no es una fecha simple', () => {
+    expect(formatDay('2026-08-27T12:00:00Z')).toBe('—');
+    expect(formatDay('no es una fecha')).toBe('—');
+    expect(formatDay('')).toBe('—');
   });
 });

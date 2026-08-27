@@ -103,6 +103,27 @@ function FitBounds({ route }: { route: RouteResult | null }) {
   return null;
 }
 
+/**
+ * Encuadra sobre el tramo seleccionado.
+ *
+ * Un tramo puede medir unos pocos metros dentro de una ruta de 190 km: sin acercar la
+ * vista, resaltarlo no se distingue. Se limita el zoom para no acabar sobre un mosaico
+ * vacío, y al deseleccionar no se reencuadra —devolver la vista de golpe desorienta.
+ */
+function FitSegment({ positions }: { positions: [number, number][] | null }) {
+  const map = useMap();
+  const key = positions ? `${positions.length}:${positions[0]?.join()}` : null;
+
+  useEffect(() => {
+    if (!positions || positions.length < 2) return;
+
+    const bounds = L.latLngBounds(positions.map(([lat, lon]) => L.latLng(lat, lon)));
+    map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
+  }, [key, map]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
+}
+
 export default function MapCanvas() {
   const origin = useRouteStore((state) => state.origin);
   const destination = useRouteStore((state) => state.destination);
@@ -111,12 +132,18 @@ export default function MapCanvas() {
   const selectRoute = useRouteStore((state) => state.selectRoute);
   const showIncidents = useRouteStore((state) => state.showIncidents);
   const showTolls = useRouteStore((state) => state.showTolls);
+  const selectedSegmentOrder = useRouteStore((state) => state.selectedSegmentOrder);
   const activeRoute = useRouteStore(selectActiveRoute);
 
   const allRoutes = useMemo(
     () => (result ? [result.route, ...result.alternatives] : []),
     [result],
   );
+
+  const selectedSegment = useMemo(() => {
+    if (!activeRoute || selectedSegmentOrder === null) return null;
+    return activeRoute.segments.find((s) => s.order === selectedSegmentOrder) ?? null;
+  }, [activeRoute, selectedSegmentOrder]);
 
   return (
     <MapContainer
@@ -155,6 +182,35 @@ export default function MapCanvas() {
           positions={activeRoute.geometry}
           pathOptions={{ color: '#2563eb', weight: 6, opacity: 0.95 }}
         />
+      )}
+
+      {/*
+        El tramo seleccionado va después de la ruta activa para quedar por encima. Se
+        pinta en ámbar sobre el azul de la ruta: son colores separados en tono y en
+        luminosidad, así que se distinguen también sin percepción del color.
+      */}
+      {selectedSegment && selectedSegment.geometry.length >= 2 && (
+        <>
+          <FitSegment positions={selectedSegment.geometry} />
+          <Polyline
+            key={`segment-${selectedSegment.order}`}
+            positions={selectedSegment.geometry}
+            pathOptions={{ color: '#f59e0b', weight: 10, opacity: 1 }}
+          >
+            <Popup>
+              <strong>{selectedSegment.roadName ?? `Tramo ${selectedSegment.order + 1}`}</strong>
+              <br />
+              {formatDistance(selectedSegment.distanceKm)} ·{' '}
+              {formatDuration(selectedSegment.durationMinutes)}
+              {selectedSegment.hasToll && selectedSegment.tollCost !== null && (
+                <>
+                  <br />
+                  Peaje: {formatCurrency(selectedSegment.tollCost, activeRoute?.cost.currency)}
+                </>
+              )}
+            </Popup>
+          </Polyline>
+        </>
       )}
 
       {origin && (

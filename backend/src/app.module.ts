@@ -23,6 +23,7 @@ import { AuditModule } from '@/modules/audit/audit.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { GeocodingModule } from '@/modules/geocoding/geocoding.module';
 import { HealthModule } from '@/modules/health/health.module';
+import { FuelModule } from '@/modules/fuel/fuel.module';
 import { IncidentsModule } from '@/modules/incidents/incidents.module';
 import { RoutesModule } from '@/modules/routes/routes.module';
 import { TollsModule } from '@/modules/tolls/tolls.module';
@@ -56,6 +57,7 @@ import { WeatherModule } from '@/modules/weather/weather.module';
     VehiclesModule,
     WeatherModule,
     TollsModule,
+    FuelModule,
     IncidentsModule,
     RoutesModule,
     GeocodingModule,

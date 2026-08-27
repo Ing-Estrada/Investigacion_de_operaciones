@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 
-import { TollCategory, WeightCategory } from '@/common/enums';
+import { FuelType, TollCategory, WeightCategory } from '@/common/enums';
 import { VehicleType } from '@/modules/vehicles/entities/vehicle-type.entity';
 
 /**
@@ -20,6 +20,7 @@ const VEHICLE_TYPES: Omit<VehicleType, 'id' | 'createdAt' | 'vehicles'>[] = [
     maxWidthMeters: 2.0,
     avgFuelConsumptionLPer100Km: 9.5,
     tollCategory: TollCategory.CategoryI,
+    fuelType: FuelType.Gasoline,
   },
   {
     name: 'Camión rígido 2 ejes',
@@ -30,6 +31,7 @@ const VEHICLE_TYPES: Omit<VehicleType, 'id' | 'createdAt' | 'vehicles'>[] = [
     maxWidthMeters: 2.5,
     avgFuelConsumptionLPer100Km: 22.0,
     tollCategory: TollCategory.CategoryII,
+    fuelType: FuelType.Diesel,
   },
   {
     name: 'Camión rígido 3 ejes',
@@ -40,6 +42,7 @@ const VEHICLE_TYPES: Omit<VehicleType, 'id' | 'createdAt' | 'vehicles'>[] = [
     maxWidthMeters: 2.55,
     avgFuelConsumptionLPer100Km: 28.5,
     tollCategory: TollCategory.CategoryIII,
+    fuelType: FuelType.Diesel,
   },
   {
     name: 'Tractocamión 5 ejes',
@@ -50,6 +53,7 @@ const VEHICLE_TYPES: Omit<VehicleType, 'id' | 'createdAt' | 'vehicles'>[] = [
     maxWidthMeters: 2.6,
     avgFuelConsumptionLPer100Km: 35.0,
     tollCategory: TollCategory.CategoryIV,
+    fuelType: FuelType.Diesel,
   },
   {
     name: 'Tren de carretera 6+ ejes',
@@ -60,6 +64,7 @@ const VEHICLE_TYPES: Omit<VehicleType, 'id' | 'createdAt' | 'vehicles'>[] = [
     maxWidthMeters: 2.6,
     avgFuelConsumptionLPer100Km: 42.0,
     tollCategory: TollCategory.CategoryV,
+    fuelType: FuelType.Diesel,
   },
 ];
 

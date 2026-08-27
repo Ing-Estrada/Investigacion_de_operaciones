@@ -65,6 +65,51 @@ export interface VehicleType {
   maxWidthMeters: number;
   avgFuelConsumptionLPer100Km: number;
   tollCategory: TollCategory;
+  fuelType: FuelType;
+}
+
+export type FuelType = 'diesel' | 'gasoline';
+
+/** Precio vigente de un combustible, con el origen del dato. */
+export interface ResolvedFuelPrice {
+  fuelType: FuelType;
+  pricePerLiter: number;
+  currency: string;
+  /** `configured` = no hay precio cargado y se está usando el del entorno. */
+  origin: 'database' | 'configured';
+  effectiveDate: string | null;
+  source: string | null;
+}
+
+export interface FuelPrice {
+  id: string;
+  fuelType: FuelType;
+  pricePerLiter: number;
+  currency: string;
+  effectiveDate: string;
+  expirationDate: string | null;
+  source: string | null;
+  createdAt: string;
+}
+
+export interface TollRate {
+  id: string;
+  tollStationId: string;
+  vehicleCategory: TollCategory;
+  rateAmount: number;
+  currency: string;
+  effectiveDate: string;
+  expirationDate: string | null;
+}
+
+export interface TollStationAdmin {
+  id: string;
+  name: string;
+  highwayName: string;
+  operator: string | null;
+  isActive: boolean;
+  location: { type: 'Point'; coordinates: [number, number] };
+  rates: TollRate[];
 }
 
 export interface Vehicle {

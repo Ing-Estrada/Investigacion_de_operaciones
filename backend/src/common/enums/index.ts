@@ -53,6 +53,12 @@ export enum WeightCategory {
   ExtraHeavy = 'extra_heavy',
 }
 
+/** Combustible del tipo de vehículo. Determina qué precio por litro se le aplica. */
+export enum FuelType {
+  Diesel = 'diesel',
+  Gasoline = 'gasoline',
+}
+
 export enum AuditAction {
   Login = 'login',
   LoginFailed = 'login_failed',

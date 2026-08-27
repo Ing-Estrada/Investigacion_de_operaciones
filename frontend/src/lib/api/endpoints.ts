@@ -3,13 +3,19 @@ import type {
   AnalyticsSummary,
   AuthResponse,
   CostByRoadType,
+  FuelPrice,
+  FuelType,
   GeocodingResult,
   OptimizeRouteRequest,
   OptimizedRouteResponse,
   Paginated,
+  ResolvedFuelPrice,
   RouteResult,
   RouteStatus,
   RoutesOverTime,
+  TollCategory,
+  TollRate,
+  TollStationAdmin,
   UserProfile,
   Vehicle,
   VehicleType,
@@ -83,6 +89,54 @@ export const geocodingApi = {
 
   reverse: (latitude: number, longitude: number) =>
     api.get<{ address: string | null }>('/geocoding/reverse', { latitude, longitude }),
+};
+
+export const fuelApi = {
+  current: () => api.get<ResolvedFuelPrice[]>('/fuel/prices/current'),
+
+  history: (fuelType?: FuelType) =>
+    api.get<FuelPrice[]>('/fuel/prices', fuelType ? { fuelType } : {}),
+
+  create: (payload: {
+    fuelType: FuelType;
+    pricePerLiter: number;
+    currency?: string;
+    effectiveDate: string;
+    expirationDate?: string | null;
+    source?: string | null;
+  }) => api.post<FuelPrice>('/fuel/prices', payload),
+
+  expire: (id: string) => api.patch<FuelPrice>(`/fuel/prices/${id}/expire`),
+};
+
+export const tollsApi = {
+  stations: (includeInactive = false) =>
+    api.get<TollStationAdmin[]>('/tolls/admin/stations', { includeInactive }),
+
+  createStation: (payload: {
+    name: string;
+    latitude: number;
+    longitude: number;
+    highwayName: string;
+    operator?: string | null;
+  }) => api.post<TollStationAdmin>('/tolls/admin/stations', payload),
+
+  updateStation: (id: string, payload: { isActive?: boolean; operator?: string | null }) =>
+    api.patch<TollStationAdmin>(`/tolls/admin/stations/${id}`, payload),
+
+  createRate: (
+    stationId: string,
+    payload: {
+      vehicleCategory: TollCategory;
+      rateAmount: number;
+      currency?: string;
+      effectiveDate: string;
+      expirationDate?: string | null;
+    },
+  ) => api.post<TollRate>(`/tolls/admin/stations/${stationId}/rates`, payload),
+
+  updateRate: (rateId: string, payload: { rateAmount?: number; expirationDate?: string | null }) =>
+    api.patch<TollRate>(`/tolls/admin/rates/${rateId}`, payload),
 };
 
 export const analyticsApi = {

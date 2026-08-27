@@ -9,6 +9,7 @@ import { Coordinates, toGeoJSONPoint } from '@/common/types/geo.types';
 import costModelConfig from '@/config/cost-model.config';
 import { ROUTING_PROVIDER, RoutingProvider } from '@/external-services/routing/routing.provider';
 import { AuditService } from '@/modules/audit/audit.service';
+import { FuelService, ResolvedFuelPrice } from '@/modules/fuel/fuel.service';
 import { IncidentHit, IncidentsService } from '@/modules/incidents/incidents.service';
 import { TollHit, TollsService } from '@/modules/tolls/tolls.service';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
@@ -48,6 +49,7 @@ export class RoutesService {
     private readonly weatherService: WeatherService,
     private readonly incidentsService: IncidentsService,
     private readonly tollsService: TollsService,
+    private readonly fuelService: FuelService,
     private readonly graphBuilder: GraphBuilderService,
     private readonly enrichment: RouteEnrichmentService,
     private readonly optimizer: RouteOptimizerService,
@@ -93,10 +95,13 @@ export class RoutesService {
 
     // 3. Datos externos. Van en paralelo porque son independientes entre sí y son
     //    con diferencia la parte más lenta del cálculo.
-    const [weather, incidents, tolls] = await Promise.all([
+    const [weather, incidents, tolls, fuelPrice] = await Promise.all([
       this.weatherService.getRouteWeather(built.combinedGeometry),
       this.incidentsService.findAlongPath(built.combinedGeometry),
       this.tollsService.findAlongPath(built.combinedGeometry, vehicle.vehicleType.tollCategory),
+      // El precio depende del combustible del vehículo: un diésel y un gasolina no
+      // cuestan lo mismo por litro, y el combustible domina el criterio económico.
+      this.fuelService.currentPrice(vehicle.vehicleType.fuelType),
     ]);
 
     // 4. Volcado sobre los arcos: a partir de aquí el peso de cada arco ya incorpora
@@ -109,7 +114,7 @@ export class RoutesService {
       sourceNodeId: built.originNodeId,
       targetNodeId: built.destinationNodeId,
       consumptionLPer100Km: vehicle.effectiveConsumptionLPer100Km,
-      fuelPricePerLiter: this.costConfig.fuel.defaultPricePerLiter,
+      fuelPricePerLiter: fuelPrice.pricePerLiter,
       alternativesWanted,
       algorithm: dto.algorithm,
       avoidTolls: dto.avoidTolls,
@@ -133,6 +138,7 @@ export class RoutesService {
         computationTimeMs: result.computationTimeMs,
         parentRouteId: null,
         alternativeRank: null,
+        fuelPrice,
       });
 
       const alternatives: Route[] = [];
@@ -149,6 +155,7 @@ export class RoutesService {
             computationTimeMs: result.computationTimeMs,
             parentRouteId: primary.id,
             alternativeRank: index + 1,
+            fuelPrice,
           }),
         );
       }
@@ -301,6 +308,7 @@ export class RoutesService {
       computationTimeMs: number;
       parentRouteId: string | null;
       alternativeRank: number | null;
+      fuelPrice: ResolvedFuelPrice;
     },
   ): Promise<Route> {
     const { optimized } = params;
@@ -326,7 +334,8 @@ export class RoutesService {
       fuelCost: round2(metrics.fuelCost),
       tollCost: round2(metrics.tollCost),
       totalCost: round2(metrics.totalCost),
-      currency: this.costConfig.fuel.currency,
+      currency: params.fuelPrice.currency,
+      fuelPricePerLiter: params.fuelPrice.pricePerLiter,
       optimizationScore: optimized.score.total,
       algorithm: params.algorithm,
       routeStatus: RouteStatus.Calculated,
@@ -402,7 +411,7 @@ export class RoutesService {
         tollCost: entity.tollCost,
         totalCost: entity.totalCost,
         currency: entity.currency,
-        fuelPricePerLiter: this.costConfig.fuel.defaultPricePerLiter,
+        fuelPricePerLiter: entity.fuelPricePerLiter ?? this.costConfig.fuel.defaultPricePerLiter,
       },
       score: optimized.score,
       origin: dto.origin,
@@ -489,7 +498,7 @@ export class RoutesService {
         tollCost: entity.tollCost,
         totalCost: entity.totalCost,
         currency: entity.currency,
-        fuelPricePerLiter: this.costConfig.fuel.defaultPricePerLiter,
+        fuelPricePerLiter: entity.fuelPricePerLiter ?? this.costConfig.fuel.defaultPricePerLiter,
       },
       score: {
         distanceScore: 0,

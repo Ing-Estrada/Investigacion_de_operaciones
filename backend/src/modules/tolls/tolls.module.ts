@@ -8,6 +8,7 @@ import { TollsService } from './tolls.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([TollStation, TollRate])],
+  // AuditModule es global, así que TollsService puede inyectar AuditService sin importarlo.
   controllers: [TollsController],
   providers: [TollsService],
   exports: [TollsService],

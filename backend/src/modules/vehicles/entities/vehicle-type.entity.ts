@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
-import { TollCategory, WeightCategory } from '@/common/enums';
+import { FuelType, TollCategory, WeightCategory } from '@/common/enums';
 import { decimal2 } from '@/common/transformers/decimal.transformer';
 
 import { Vehicle } from './vehicle.entity';
@@ -66,6 +66,11 @@ export class VehicleType {
   @ApiProperty({ enum: TollCategory })
   @Column({ type: 'enum', enum: TollCategory, name: 'toll_category' })
   tollCategory: TollCategory;
+
+  /** Determina qué precio por litro se aplica al calcular el coste (RF-006). */
+  @ApiProperty({ enum: FuelType })
+  @Column({ type: 'enum', enum: FuelType, enumName: 'fuel_type_enum', name: 'fuel_type' })
+  fuelType: FuelType;
 
   @ApiProperty()
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })

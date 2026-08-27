@@ -22,3 +22,9 @@ export class DecimalTransformer implements ValueTransformer {
 
 export const decimal2 = new DecimalTransformer(2);
 export const decimal3 = new DecimalTransformer(3);
+/**
+ * Cuatro decimales para el precio por litro: en monedas de baja denominación la parte
+ * fraccionaria del precio se pierde a dos decimales, y ese error se multiplica por
+ * decenas de litros en cada ruta.
+ */
+export const decimal4 = new DecimalTransformer(4);

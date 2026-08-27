@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, LogOut, Map, Route as RouteIcon, Truck } from 'lucide-react';
+import { BarChart3, LogOut, Map, Receipt, Route as RouteIcon, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Planificador', icon: Map },
   { href: '/dashboard/routes', label: 'Rutas', icon: RouteIcon },
   { href: '/dashboard/vehicles', label: 'Vehículos', icon: Truck },
+  { href: '/dashboard/tariffs', label: 'Tarifas', icon: Receipt },
   { href: '/dashboard/analytics', label: 'Analíticas', icon: BarChart3 },
 ];
 

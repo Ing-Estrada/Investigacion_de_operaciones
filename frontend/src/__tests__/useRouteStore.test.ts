@@ -134,6 +134,69 @@ describe('useRouteStore', () => {
   });
 });
 
+describe('selección de tramo', () => {
+  beforeEach(() => {
+    useRouteStore.getState().reset();
+  });
+
+  it('empieza sin ningún tramo resaltado', () => {
+    expect(useRouteStore.getState().selectedSegmentOrder).toBeNull();
+  });
+
+  it('resalta el tramo indicado', () => {
+    useRouteStore.getState().selectSegment(3);
+
+    expect(useRouteStore.getState().selectedSegmentOrder).toBe(3);
+  });
+
+  it('deselecciona al volver a pulsar el mismo tramo', () => {
+    useRouteStore.getState().selectSegment(3);
+    useRouteStore.getState().selectSegment(3);
+
+    expect(useRouteStore.getState().selectedSegmentOrder).toBeNull();
+  });
+
+  it('resalta el tramo 0 sin confundirlo con "ninguno"', () => {
+    // `order` empieza en 0: una comprobación por veracidad en lugar de por `null`
+    // dejaría el primer tramo de cada ruta imposible de seleccionar.
+    useRouteStore.getState().selectSegment(0);
+
+    expect(useRouteStore.getState().selectedSegmentOrder).toBe(0);
+  });
+
+  it('cambia el resaltado al pulsar otro tramo', () => {
+    useRouteStore.getState().selectSegment(3);
+    useRouteStore.getState().selectSegment(7);
+
+    expect(useRouteStore.getState().selectedSegmentOrder).toBe(7);
+  });
+
+  it('limpia el tramo al cambiar de ruta', () => {
+    // El `order` solo es único dentro de su ruta: conservarlo señalaría un tramo
+    // distinto del que el usuario había elegido.
+    useRouteStore.getState().setResult(RESULT);
+    useRouteStore.getState().selectSegment(5);
+    useRouteStore.getState().selectRoute('alt-2');
+
+    expect(useRouteStore.getState().selectedSegmentOrder).toBeNull();
+  });
+
+  it('limpia el tramo al mover un extremo de la ruta', () => {
+    useRouteStore.getState().setResult(RESULT);
+    useRouteStore.getState().selectSegment(5);
+    useRouteStore.getState().setOrigin(ORIGIN);
+
+    expect(useRouteStore.getState().selectedSegmentOrder).toBeNull();
+  });
+
+  it('limpia el tramo al llegar un resultado nuevo', () => {
+    useRouteStore.getState().selectSegment(5);
+    useRouteStore.getState().setResult(RESULT);
+
+    expect(useRouteStore.getState().selectedSegmentOrder).toBeNull();
+  });
+});
+
 describe('selectActiveRoute', () => {
   beforeEach(() => {
     useRouteStore.getState().reset();
