@@ -30,7 +30,7 @@ optimización ponderando **distancia (40%), tiempo (30%), coste (20%) y riesgo (
 
 | Componente | Typecheck | Lint | Tests | Build |
 | --- | --- | --- | --- | --- |
-| Backend (NestJS) | OK | limpio | 150 unitarios + 16 e2e | OK |
+| Backend (NestJS) | OK | limpio | 204 unitarios + 16 e2e | OK |
 | Frontend (Next.js) | OK | limpio | 49 unitarios | OK |
 
 Los e2e corren contra PostgreSQL con PostGIS y Redis reales (`docker compose up -d postgres redis`
@@ -344,7 +344,7 @@ Toda respuesta correcta viaja envuelta como `{ success, data, timestamp, path }`
 ```bash
 # Backend
 cd backend
-npm run test:unit          # 150 tests
+npm run test:unit          # 204 tests
 npm run test:unit -- --coverage
 npm run test:e2e           # requiere PostgreSQL + migraciones aplicadas
 npm run typecheck && npm run lint
@@ -359,6 +359,11 @@ Los tests de los algoritmos son la parte más densa a propósito: cubren la corr
 Dijkstra, la equivalencia A\*↔Dijkstra sobre grafos aleatorios, las propiedades de Yen
 (caminos distintos, sin bucles, ordenados), la no negatividad del peso, la admisibilidad
 de la heurística y la saturación de la puntuación.
+
+Después van los dos puntos donde un fallo silencioso sería más caro: la rotación de
+refresh tokens (`token.service.spec.ts` — detección de reutilización, revocación de la
+familia, confusión de secretos) y el control de acceso a nivel de objeto junto con las
+restricciones de circulación (`vehicles.service.spec.ts` — RF-014).
 
 ---
 
@@ -426,4 +431,4 @@ corregido y documentado.
 
 ## Licencia
 
-MIT.
+MIT — ver [`LICENSE`](LICENSE).
