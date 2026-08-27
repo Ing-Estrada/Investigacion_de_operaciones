@@ -9,17 +9,23 @@ import { TollStation } from '@/modules/tolls/entities/toll-station.entity';
  * Estaciones de peaje de ejemplo sobre el corredor Pitalito - Neiva (Huila, Colombia),
  * que es el escenario que usa la especificación.
  *
- * Son datos de demostración con ubicaciones aproximadas: sirven para que el sistema sea
- * ejecutable de extremo a extremo desde el primer arranque, no como fuente autoritativa.
- * En producción, esta tabla se alimenta de los pliegos tarifarios del operador de la vía.
+ * Las coordenadas están tomadas del trazado real que devuelve el proveedor de rutas para
+ * ese par origen-destino, no inventadas «por la zona». La diferencia importa: la búsqueda
+ * de peajes usa un radio de captura de 500 m alrededor de la traza, así que una estación
+ * situada a unos kilómetros de la carretera —lo que parece un error inofensivo al
+ * escribir datos de ejemplo— nunca se captura, y la primera ruta que calcule quien
+ * despliegue esto mostraría cero peajes y parecería que la función está rota.
+ *
+ * Los importes SÍ son ficticios. En producción esta tabla se alimenta de los pliegos
+ * tarifarios del operador de la vía.
  */
 const STATIONS = [
   {
     name: 'Peaje Los Cauchos',
     highwayName: 'Ruta 45 - Pitalito/Garzón',
     operator: 'Concesión Vial',
-    latitude: 2.0521,
-    longitude: -75.9312,
+    latitude: 2.0589,
+    longitude: -75.8392,
     rates: {
       [TollCategory.CategoryI]: 3.1,
       [TollCategory.CategoryII]: 5.4,
@@ -32,8 +38,8 @@ const STATIONS = [
     name: 'Peaje El Juncal',
     highwayName: 'Ruta 45 - Garzón/Neiva',
     operator: 'Concesión Vial',
-    latitude: 2.6104,
-    longitude: -75.5893,
+    latitude: 2.357,
+    longitude: -75.5697,
     rates: {
       [TollCategory.CategoryI]: 2.9,
       [TollCategory.CategoryII]: 5.1,
@@ -46,8 +52,8 @@ const STATIONS = [
     name: 'Peaje Santa Helena',
     highwayName: 'Ruta 45 - Acceso Neiva',
     operator: 'Concesión Vial',
-    latitude: 2.8935,
-    longitude: -75.3204,
+    latitude: 2.6209,
+    longitude: -75.3859,
     rates: {
       [TollCategory.CategoryI]: 3.4,
       [TollCategory.CategoryII]: 5.9,

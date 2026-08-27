@@ -1,4 +1,4 @@
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Type } from 'class-transformer';
 import {
   IsBooleanString,
   IsEnum,
@@ -33,11 +33,20 @@ export enum WeatherProvider {
  * Contrato de variables de entorno. Se valida una sola vez al arrancar el proceso:
  * si falta un secreto o un valor es inválido, el proceso muere en el boot en lugar de
  * fallar impredeciblemente en runtime.
+ *
+ * Los campos numéricos llevan `@Type(() => Number)` explícito y no confían en la
+ * conversión implícita de class-transformer. Esa conversión se apoya en la metadata
+ * `design:type` que emite el compilador, y cualquier pipeline que transpile sin
+ * información de tipos —ts-jest en modo aislado, SWC, esbuild— la emite como `Object`.
+ * El resultado es que `PORT` sigue siendo la cadena "3001", `@IsInt()` falla y el
+ * proceso no arranca. El decorador explícito no depende de la metadata y funciona igual
+ * con cualquier compilador.
  */
 export class EnvironmentVariables {
   @IsEnum(NodeEnv)
   NODE_ENV: NodeEnv = NodeEnv.Development;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(65535)
@@ -52,6 +61,7 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   DB_HOST: string;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(65535)
@@ -72,6 +82,7 @@ export class EnvironmentVariables {
   @IsBooleanString()
   DB_SSL?: string;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   DB_POOL_SIZE = 20;
@@ -81,6 +92,7 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   REDIS_HOST: string;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(65535)
@@ -89,6 +101,7 @@ export class EnvironmentVariables {
   @IsString()
   REDIS_PASSWORD = '';
 
+  @Type(() => Number)
   @IsInt()
   @Min(0)
   REDIS_DB = 0;
@@ -117,10 +130,12 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   CORS_ORIGINS: string;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   RATE_LIMIT_DEFAULT_MAX = 100;
 
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   RATE_LIMIT_DEFAULT_WINDOW_SEC = 60;
@@ -153,6 +168,7 @@ export class EnvironmentVariables {
   @IsUrl({ require_tld: false })
   OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
+  @Type(() => Number)
   @IsInt()
   @Min(100)
   EXTERNAL_API_TIMEOUT_MS = 8000;

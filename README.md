@@ -29,12 +29,38 @@ optimización ponderando **distancia (40%), tiempo (30%), coste (20%) y riesgo (
 ## Estado
 
 | Componente | Typecheck | Lint | Tests | Build |
-|---|---|---|---|---|
-| Backend (NestJS) | OK | limpio | 150 unitarios | OK |
+| --- | --- | --- | --- | --- |
+| Backend (NestJS) | OK | limpio | 150 unitarios + 16 e2e | OK |
 | Frontend (Next.js) | OK | limpio | 49 unitarios | OK |
 
-Los tests e2e del backend (`backend/test/*.e2e-spec.ts`) requieren PostgreSQL con PostGIS
-y las migraciones aplicadas; se ejecutan en CI y localmente con `docker compose up -d postgres redis`.
+Los e2e corren contra PostgreSQL con PostGIS y Redis reales (`docker compose up -d postgres redis`
+y `npm run migration:run`), no contra dobles.
+
+### Prueba de humo verificada
+
+El flujo completo se ha ejecutado de extremo a extremo contra la API en marcha y el OSRM
+público, con el corredor Pitalito → Neiva y un tractocamión de 5 ejes:
+
+```text
+Distancia .......... 188,71 km
+Tiempo estimado .... 2 h 17 min
+Combustible ........ 66,05 L
+Coste combustible .. 69,35 USD
+Coste peajes ....... 34,90 USD  (3 estaciones, categoría IV)
+COSTE TOTAL ........ 104,25 USD
+Puntuación ......... 84,86/100
+Algoritmo .......... astar — optimización en 2 ms sobre 55 tramos
+```
+
+Dos observaciones de esa ejecución que conviene conocer de antemano:
+
+- **El OSRM público devuelve una sola ruta** para ese par origen-destino, incluso
+  pidiéndole alternativas. Sin bifurcaciones en el grafo, Yen no puede construir un
+  camino sin bucles distinto y el sistema devuelve **0 alternativas**. No es un fallo: es
+  el resultado correcto para una red vial sin opciones. Con una instancia propia de OSRM,
+  o entre puntos con varias vías reales, sí aparecen.
+- El peaje **baja la puntuación de 86,25 a 84,86** frente a la misma ruta sin peajes: el
+  criterio de coste pesa un 20% y el sistema lo refleja en el ranking.
 
 ---
 
@@ -104,7 +130,7 @@ producción. Para un despliegue real hay que levantar instancias propias.
 
 Arquitectura en capas con dominios separados (Layered + DDD).
 
-```
+```text
 ┌─────────────────────────── Presentación ───────────────────────────┐
 │  Next.js 14 · React 18 · TypeScript · Tailwind                     │
 │  Leaflet (mapa) · TanStack Query (estado remoto) · Zustand (UI)    │
@@ -129,7 +155,7 @@ Arquitectura en capas con dominios separados (Layered + DDD).
 
 ### Flujo de una optimización
 
-```
+```text
 POST /routes/optimize
   1. Autenticación JWT + autorización por rol + rate limit
   2. Validación del DTO y comprobación de propiedad del vehículo
@@ -162,7 +188,7 @@ El problema es multiobjetivo: la ruta más corta, la más rápida y la más bara
 coinciden. Se resuelve por **suma ponderada escalarizada**, que reduce los cuatro
 objetivos a un escalar y permite aplicar algoritmos de camino mínimo.
 
-```
+```text
 peso(arco) = 0,40 · (km / 1000)
            + 0,30 · (minutos_efectivos / 1200)
            + 0,20 · (coste / 500)
@@ -183,14 +209,14 @@ pesos no negativos, condición necesaria para que Dijkstra sea correcto.
 ### Algoritmos
 
 | Algoritmo | Uso | Complejidad |
-|---|---|---|
+| --- | --- | --- |
 | **Dijkstra** | Camino mínimo, referencia de corrección | O(E log V) |
 | **A\*** | Por defecto; heurística de Haversine | O(E log V), muy inferior en la práctica |
 | **Yen** | K caminos más cortos sin bucles (alternativas) | O(K·V·E log V) |
 
-La heurística de A* es **admisible y consistente**: usa la distancia del gran círculo
+La heurística de A\* es **admisible y consistente**: usa la distancia del gran círculo
 (nunca mayor que la real por carretera) y la velocidad máxima observada en el grafo, y
-omite los términos de coste y riesgo cuyo mínimo real es 0. Por eso A* devuelve
+omite los términos de coste y riesgo cuyo mínimo real es 0. Por eso A\* devuelve
 exactamente el mismo óptimo que Dijkstra explorando menos nodos — hay un test de
 propiedad que lo comprueba sobre 50 grafos generados al azar.
 
@@ -213,7 +239,7 @@ el ranking dejaría de tener sentido.
 ## Seguridad
 
 | Control | Implementación |
-|---|---|
+| --- | --- |
 | Contraseñas | Argon2id, 19 MiB / t=2 / p=1 (parámetros OWASP) |
 | Sesiones | JWT HS256 · access 15 min · refresh 7 días en cookie httpOnly |
 | Rotación de refresh | Persistido como hash SHA-256; reutilizar un token rotado revoca la familia entera |
@@ -237,7 +263,7 @@ miden menos de 32 caracteres o si en producción `CORS_ORIGINS` contiene `*`.
 
 ## Estructura del proyecto
 
-```
+```text
 .
 ├── backend/                     API NestJS
 │   └── src/
@@ -284,7 +310,7 @@ miden menos de 32 caracteres o si en producción `CORS_ORIGINS` contiene `*`.
 Documentación interactiva en `/api/v1/docs` (Swagger UI, deshabilitado en producción).
 
 | Método | Endpoint | Rol | Descripción |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | POST | `/auth/register` | público | Alta de cuenta (3/hora por IP) |
 | POST | `/auth/login` | público | Inicio de sesión (5/min por IP) |
 | POST | `/auth/refresh` | público | Rotación del refresh token |
@@ -330,7 +356,7 @@ npm run typecheck && npm run lint
 ```
 
 Los tests de los algoritmos son la parte más densa a propósito: cubren la corrección de
-Dijkstra, la equivalencia A*↔Dijkstra sobre grafos aleatorios, las propiedades de Yen
+Dijkstra, la equivalencia A\*↔Dijkstra sobre grafos aleatorios, las propiedades de Yen
 (caminos distintos, sin bucles, ordenados), la no negatividad del peso, la admisibilidad
 de la heurística y la saturación de la puntuación.
 
@@ -370,7 +396,7 @@ antes de habilitarlos.
 ## Resolución de problemas
 
 | Síntoma | Causa habitual | Solución |
-|---|---|---|
+| --- | --- | --- |
 | `Configuración de entorno inválida` al arrancar | Falta una variable o un secreto es corto | El mensaje lista la variable concreta |
 | `JWT_ACCESS_SECRET y JWT_REFRESH_SECRET deben ser distintos` | Ambos secretos copiados iguales | Genera dos con `openssl rand -base64 48` |
 | `type "geometry" does not exist` | PostGIS no instalado en esa base de datos | La migración crea la extensión; comprueba permisos de superusuario |
@@ -378,6 +404,8 @@ antes de habilitarlos.
 | 502 al calcular una ruta | OSRM público caído o saturado | Reintentos y circuit breaker actúan solos; para producción, instancia propia |
 | 429 al calcular rutas | Límite de 50/hora por usuario | Espera o ajusta el límite en el decorador `@RateLimit` |
 | El mapa aparece en blanco | Leaflet sin altura de contenedor | El contenedor necesita altura explícita; ver `RouteMap` |
+| Devuelve 0 alternativas | El proveedor solo encontró una ruta | Correcto si la red vial no ofrece opciones. Comprueba cuántas devuelve OSRM para ese par antes de sospechar de Yen |
+| Devuelve 0 peajes en una vía de pago | Las coordenadas de la estación no caen sobre el trazado | El radio de captura es de 500 m. Comprueba la distancia real con `ST_Distance(s.location::geography, r.path::geography)` |
 | `Redis conectado` nunca aparece en el log | Redis inaccesible | El sistema funciona degradado, sin caché; revisa `REDIS_HOST` |
 
 ---

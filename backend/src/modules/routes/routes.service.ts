@@ -210,9 +210,18 @@ export class RoutesService {
       builder.andWhere('route.route_status = :status', { status: query.status });
     }
 
+    // `route.createdAt` es el nombre de la PROPIEDAD, no el de la columna.
+    //
+    // Con `skip`/`take` sobre una relación to-many, TypeORM resuelve la paginación en
+    // dos consultas y necesita casar el ORDER BY con la expresión del SELECT; para eso
+    // busca la metadata de la propiedad. Pasarle el nombre físico de la columna
+    // (`created_at`) no la encuentra y revienta con un TypeError opaco sobre
+    // `databaseName` dentro del propio TypeORM.
+    //
+    // Tampoco se ordena por los tramos aquí: sobre una relación to-many paginada el
+    // orden del join no se respeta. Los tramos se ordenan al mapear a DTO.
     const [routes, total] = await builder
-      .orderBy('route.created_at', 'DESC')
-      .addOrderBy('segment.segment_order', 'ASC')
+      .orderBy('route.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

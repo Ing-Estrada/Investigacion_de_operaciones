@@ -52,7 +52,7 @@ La especificación proponía `distancia_score = 100 - (distancia / 100)`. Para u
 
 La implementación normaliza contra una escala y **satura** en el rango [0, 100]:
 
-```
+```text
 score = 100 · (1 − min(1, valor / escala))
 ```
 
@@ -108,15 +108,15 @@ caminos distintos entre sí, sin nodos repetidos, y ordenados por coste crecient
 Se añade un filtro posterior: dos alternativas que comparten más del 75% de su recorrido
 son, para el conductor, la misma ruta, y se descartan.
 
-### 2.3 A* como algoritmo por defecto
+### 2.3 A\* como algoritmo por defecto
 
-La especificación describía Dijkstra como principal y A* como «optimización local».
+La especificación describía Dijkstra como principal y A\* como «optimización local».
 Ambos están implementados y son intercambiables por configuración (`algorithm` en el DTO),
-pero **A* es el predeterminado**: con una heurística admisible y consistente devuelve
+pero **A\* es el predeterminado**: con una heurística admisible y consistente devuelve
 exactamente el mismo óptimo explorando bastantes menos nodos.
 
 La equivalencia no se asume, se comprueba: hay un test de propiedad que genera 50 grafos
-aleatorios y verifica que A* y Dijkstra coinciden en coste
+aleatorios y verifica que A\* y Dijkstra coinciden en coste
 ([`astar.algorithm.spec.ts`](../backend/src/modules/routes/algorithms/astar.algorithm.spec.ts)).
 
 La especificación afirmaba que la heurística de Haversine «no admite la curvatura de la
@@ -173,7 +173,7 @@ mantener las copias sincronizadas a mano.
 Se declaran abiertamente en lugar de dejarlos como huecos silenciosos.
 
 | Componente | Estado | Motivo |
-|---|---|---|
+| --- | --- | --- |
 | **Kafka / RabbitMQ** | No implementado | Ningún requisito funcional necesita procesamiento asíncrono. Añadir un broker sin consumidores es infraestructura muerta que hay que operar, monitorizar y parchear. Cuando aparezca el primer caso real (recálculo masivo nocturno, notificaciones a conductores), es el momento de introducirlo. |
 | **Elasticsearch** | No implementado | Las búsquedas del sistema son geoespaciales, y PostGIS con índices GIST las resuelve mejor que Elasticsearch. Las búsquedas de texto que hay (usuarios, placas) las cubre `pg_trgm`, ya instalado. |
 | **WebSocket en tiempo real** | Preparado, no implementado | NGINX ya proxea `/socket.io/`. No hay requisito funcional que lo exija: RF-007 y RF-008 son consultas, no suscripciones. |
@@ -218,7 +218,28 @@ falsa sensación de precisión.
 En producción reescribiría el esquema a partir de las entidades y puede llegar a borrar
 columnas con datos. El esquema lo gobiernan exclusivamente las migraciones versionadas.
 
-### 4.5 El seeder de administrador no tiene contraseña por defecto
+### 4.5 La validación de entorno no depende de la metadata del compilador
+
+Los campos numéricos de `EnvironmentVariables` llevan `@Type(() => Number)` explícito en
+lugar de apoyarse en `enableImplicitConversion`. Esa conversión implícita lee la metadata
+`design:type` que emite el compilador, y **cualquier pipeline que transpile sin
+información de tipos —ts-jest en modo aislado, SWC, esbuild— la emite como `Object`**. El
+resultado es que `PORT` sigue siendo la cadena `"3001"`, `@IsInt()` falla y el proceso no
+arranca, con un error que apunta a la configuración y no a la causa real.
+
+Lo detectaron los tests e2e, que corren sobre ts-jest. Merece la pena señalarlo porque
+muchos equipos migran Nest a SWC por velocidad de compilación y se encontrarían el mismo
+fallo en despliegue, no en desarrollo.
+
+### 4.6 Los datos de peajes de ejemplo caen sobre el trazado real
+
+Las coordenadas del seeder están tomadas de la geometría que devuelve el proveedor para
+el corredor Pitalito - Neiva, no elegidas «por la zona». Con un radio de captura de 500 m,
+unas coordenadas aproximadas a 4-12 km de la carretera —que es lo que salía al inventarlas—
+no se capturan nunca, y la primera ruta que calcule quien despliegue el sistema mostraría
+cero peajes. La función pareceria rota cuando el fallo estaría en los datos de demostración.
+
+### 4.7 El seeder de administrador no tiene contraseña por defecto
 
 `SEED_ADMIN_PASSWORD` es obligatoria y se valida contra la política de contraseñas. Un
 seeder con credenciales fijas en el código es la vía por la que acaban en producción
@@ -229,7 +250,7 @@ sistemas con `admin/admin123`, y además el hash quedaría versionado en el repo
 ## 5. Trazabilidad de requisitos
 
 | Requisito | Implementación |
-|---|---|
+| --- | --- |
 | RF-001 Selección en mapa | `frontend/src/components/map/MapCanvas.tsx` · `RouteMap.tsx` |
 | RF-002 Análisis de red vial | `external-services/routing/osrm.provider.ts` · `services/graph-builder.service.ts` |
 | RF-003 Enrutamiento multicriterio | `algorithms/cost-model.ts` · `dijkstra.algorithm.ts` · `astar.algorithm.ts` |
