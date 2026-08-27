@@ -406,7 +406,9 @@ antes de habilitarlos.
 | `JWT_ACCESS_SECRET y JWT_REFRESH_SECRET deben ser distintos` | Ambos secretos copiados iguales | Genera dos con `openssl rand -base64 48` |
 | `type "geometry" does not exist` | PostGIS no instalado en esa base de datos | La migración crea la extensión; comprueba permisos de superusuario |
 | Rutas sin ajuste meteorológico | Sin `OPENWEATHER_API_KEY` | Es el comportamiento previsto; la interfaz lo indica |
+| 502 al calcular una ruta | `OSRM_BASE_URL` con `http://` | La instancia pública ya no atiende el puerto 80: el log muestra `ECONNREFUSED …:80`. Tiene que ser `https://` |
 | 502 al calcular una ruta | OSRM público caído o saturado | Reintentos y circuit breaker actúan solos; para producción, instancia propia |
+| 502 al buscar una dirección | `NOMINATIM_USER_AGENT` sin contacto real | Nominatim responde 403 a los User-Agent de plantilla. Pon un correo tuyo, o fija los puntos en el mapa |
 | 429 al calcular rutas | Límite de 50/hora por usuario | Espera o ajusta el límite en el decorador `@RateLimit` |
 | El mapa aparece en blanco | Leaflet sin altura de contenedor | El contenedor necesita altura explícita; ver `RouteMap` |
 | Devuelve 0 alternativas | El proveedor solo encontró una ruta | Correcto si la red vial no ofrece opciones. Comprueba cuántas devuelve OSRM para ese par antes de sospechar de Yen |
