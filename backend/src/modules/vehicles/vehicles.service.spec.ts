@@ -72,6 +72,16 @@ function makeEdge(overrides: Partial<RoadEdge> = {}): RoadEdge {
   } as RoadEdge;
 }
 
+/** Ejecuta la comprobación y devuelve la lista de restricciones incumplidas. */
+function captureRestrictions(run: () => void): string[] {
+  try {
+    run();
+  } catch (error) {
+    return (error as VehicleRestrictionException).restrictions;
+  }
+  throw new Error('Se esperaba VehicleRestrictionException y no se lanzó ninguna.');
+}
+
 const CREATE_DTO = {
   plate: 'XYZ-987',
   vehicleTypeId: 'type-1',
